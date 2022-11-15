@@ -159,10 +159,12 @@ void reader(int argc, char *argv[], opt options) {
 			if (fp != NULL) {
 
 				int flag_bool = 0;
-				int str_count = 0;
+				
 				char symbol;
 				char symbol_prev;
 				int flag_bool_s = 0;
+				int str_count = 0;
+				int i = 0;
 
 
 				while ((symbol=fgetc(fp)) != EOF) {
@@ -182,9 +184,14 @@ void reader(int argc, char *argv[], opt options) {
 							printf("%c", '$');
 						}
 					}
-					// if (options.n == 1) {
-					// 	flag_n(fp);
-					// }
+					if (options.n == 1) {
+						if (i == 0) {
+							printf("%6d\t", ++str_count);
+						}
+						if (symbol_prev == '\n') {
+							printf("%6d\t", ++str_count);
+						}
+					}
 					if (options.s == 1) {
 
 						if (symbol_prev == '\n' && symbol == '\n' && flag_bool_s == 0) {
@@ -209,6 +216,7 @@ void reader(int argc, char *argv[], opt options) {
 						printf("\n");
 					}
 					symbol_prev = symbol;
+					i++;
 				}
 
 			} else {
