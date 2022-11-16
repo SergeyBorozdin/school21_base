@@ -12,6 +12,14 @@ typedef struct options {
 	int v; // показывает не читаемые символы
 } opt;
 
+char const *print_unprintable(int c) {
+	char const *code[32] = {"^@", "^A", "^B", "^C", "^D", "^E", "^F", "^G",
+	"^H", " ", "\v", "^K", "^L", "^M", "^N", "^O", "^P", "^Q", "^R", "^S",
+	"^T", "^U", "^V", "^W", "^X", "^Y", "^Z", "^[", "^\\", "^]", "^^", "^_"};
+	
+	return (code[c]);
+}
+
 void cat_not_arg() {
     char symbol;
     while(scanf("%c", &symbol)) {
@@ -39,7 +47,7 @@ void parser(int argc, char *argv[], opt *options) {
 			case 'n': options->n = 1; break;
 			case 's': options->s = 1; break;
 			case 't': options->t = 1; break;
-			case 'v': options->v = 1; break;
+			case 'v': options->v = 1; options->v = 1; break;
 			case 'E': options->e = 1; options->v = 1; break;
 			case 'T': options->t = 1; break;
 			default: fprintf(stderr, "usage - 'benstvTE'");
@@ -118,22 +126,22 @@ void flag_s(FILE *file) { // сжимает пустые строки до од�
     }
 }
 
-void flagt(FILE *file) { // показыввает табы
+// void flagt(FILE *file) { // показыввает табы
 
-    char symbol;
-	while ((symbol=fgetc(file))!=EOF){
-        printf("%c", symbol);
-    }
-}
+//     char symbol;
+// 	while ((symbol=fgetc(file))!=EOF){
+//         printf("%c", symbol);
+//     }
+// }
 
-void flag_v(FILE *file) { // показывает не читаемые символы
+// void flag_v(FILE *file) { // показывает не читаемые символы
 
-	char symbol;
-	while ((symbol=fgetc(file))!=EOF){
-		printf("%c", symbol);
+// 	char symbol;
+// 	while ((symbol=fgetc(file))!=EOF){
+// 		printf("%c", symbol);
 
-    }
-}
+//     }
+// }
 
 // int counter_sumbol_file (FILE *file) { // показывает не читаемые символы
 
@@ -201,9 +209,12 @@ void reader(int argc, char *argv[], opt options) {
 							flag_bool_s = 0;
 						}
 					}
-					// if (options.t == 1) {
-					// 	flagt(fp);
-					// }
+					if (options.t == 1) {
+						if (symbol == '\t') {
+							printf("%c%c", '^', 'I');
+							continue;
+						}
+					}
 					// if (options.v == 1) {
 					// 	flag_v(fp);
 					// }
