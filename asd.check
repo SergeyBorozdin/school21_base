@@ -1,0 +1,11 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+
+#test s21_cat1
+char string[20] = "src/text.txt";
+ck_assert_int_eq(strlen(string), strlen(string));
+
+
+https://libcheck.github.io/check/doc/check_html/check_4.html
