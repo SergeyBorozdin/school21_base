@@ -78,70 +78,46 @@ void reader(int argc, char *argv[], opt options) {
 
       if (fp != NULL) {
         int symbol = 0;
-        int symbol_prev = 10;
-        int flag_bool_s = 0;
-        int str_count = 0;
-        int i = 0;
+        int symbol_prev = '\n';
+        int flag_bool = 0;
+        int string_count = 0;
+        int empty_string = 0;
 
         while ((symbol = fgetc(fp)) != EOF) {
-          if (symbol_prev == '\n') {
-            if (options.s == 1) {
-              if (symbol == '\n') {
-                if (flag_bool_s == 1) {
-                  continue;
-                }
-                flag_bool_s = 1;
-              } else {
-                flag_bool_s = 0;
+          if (options.s == 1 && symbol == '\n' && symbol_prev == '\n') {
+            empty_string++;
+            if (empty_string > 1) {
+              flag_bool = 1;
+            }
+          } else {
+            flag_bool = 0;
+            empty_string = 0;
+          }
+          if (flag_bool == 0) {
+            if (((options.n == 1 && options.b == 0) ||
+                 (options.b == 1 && symbol != '\n')) &&
+                symbol_prev == '\n') {
+              printf("%*d\t", 6, ++string_count);
+            }
+            if (options.t == 1 && symbol == '\t') {
+              printf("^");
+              symbol = 'I';
+            }
+            if (options.e == 1 && symbol == '\n') {
+              printf("$");
+            }
+            if (options.v == 1) {
+              if ((symbol >= 0 && symbol < 9) || (symbol > 10 && symbol < 32)) {
+                printf("^");
+                symbol = symbol + 64;
+              } else if (symbol == 127) {
+                printf("^");
+                symbol = '?';
               }
             }
+            printf("%c", symbol);
+            symbol_prev = symbol;
           }
-          if ((options.n == 1 && options.b == 0) ||
-              (options.b == 1 && symbol != '\n' && symbol_prev == '\n')) {
-            printf("%6d\t", ++str_count);
-          }
-          // if (options.b == 1) {
-          //   if (symbol != '\n') {
-          //     printf("%6d\t", ++str_count);
-          //   }
-          // }
-          // if (options.n == 1) {
-          //   if (i == 0) {
-          //     printf("%6d\t", ++str_count);
-          //     symbol_prev = 0;
-          //   }
-          //   if (symbol_prev == '\n') {
-          //     printf("%6d\t", ++str_count);
-          //   }
-          // }
-
-          if (symbol == '\n') {
-            if (options.e == 1) {
-              if (symbol == '\n') {
-                printf("%c", '$');
-              }
-            }
-          }
-          if (symbol == '\t') {
-            if (options.t == 1) {
-              printf("%c%c", '^', 'I');
-              continue;
-            }
-          }
-          if (options.v == 1) {
-            if ((symbol >= 0 && symbol < 9) || (symbol > 10 && symbol < 32)) {
-              printf("^%c", symbol + 64);
-              continue;
-            }
-            if (symbol == 127) {
-              printf("^%c", '?');
-              continue;
-            }
-          }
-
-          printf("%c", symbol);
-          symbol_prev = symbol;
-          i++;
         }
       } else {
         printf("%s: %s: No such file or directory\n", argv[0], argv[i]);
