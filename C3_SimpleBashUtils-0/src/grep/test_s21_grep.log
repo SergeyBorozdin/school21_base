@@ -1,3 +1,5 @@
+./s21_grep: while: No such file or directory
+./s21_grep: void: No such file or directory
 #include <getopt.h>
 #include <regex.h>
 #include <stdio.h>
@@ -91,7 +93,7 @@ int match(char *string, char *pattern, regex_t *re) {
   return (status);
 }
 
-void reader_no_flags(int argc, char *argv[]) {
+void reader_no_flags(int argc, char *argv[], opt options) {
   char *str_pattern = argv[1];
   int retval;
   regex_t re;
@@ -117,48 +119,28 @@ void reader_no_flags(int argc, char *argv[]) {
   }
 }
 
-void reader_whith_flags(int argc, char *argv[], opt options) {
-  if (options.e) {
-    int count_pattern = 0;
-    for (int i = 0; i < argc; i++) {
-      if (*argv[i] == '-') {
-        count_pattern++;
-      }
-    }
+void reader(int argc, char *argv[], opt options) {
+  char *str_pattern = argv[1];
+  int retval;
+  regex_t re;
 
-    char *patterns[count_pattern];
-    int j = 0;
-    for (int i = 0; i != argc; i++) {
-      if (*argv[i] == '-') {
-        patterns[j] = argv[i + 1];
-        j++;
-      }
-    }
+  for (int i = 2; i < argc; i++) {
+    FILE *fp = fopen(argv[i], "r");
 
-    int retval;
-    regex_t re;
-    int y = 0;
-    int k = 1;
-
-    for (k = k + count_pattern * 2; k < argc; k++) {
-      FILE *fp = fopen(argv[k], "r");
-
-      if (fp != NULL) {
-        char line[4096];
-        while ((fgets(line, sizeof(line), fp)) != NULL) {
-          retval = match(line, patterns[y], &re);
-          if (retval == 0) {
-            if (argc > 3) {
-              printf("%s:%s", argv[k], line);
-            } else {
-              printf("%s", line);
-            }
+    if (fp != NULL) {
+      char line[4096];
+      while ((fgets(line, sizeof(line), fp)) != NULL) {
+        retval = match(line, str_pattern, &re);
+        if (retval == 0) {
+          if (argc > 3) {
+            printf("%s:%s", argv[i], line);
+          } else {
+            printf("%s", line);
           }
-          y++;
         }
-      } else {
-        printf("%s: %s: No such file or directory\n", argv[0], argv[k]);
       }
+    } else {
+      printf("%s: %s: No such file or directory\n", argv[0], argv[i]);
     }
   }
 }
@@ -173,11 +155,26 @@ int main(int argc, char *argv[]) {
     parser(argc, argv, &options);
     if (!options.c && !options.e && !options.f && !options.h && !options.i &&
         !options.l && !options.n && !options.o && !options.s && !options.v) {
-      reader_no_flags(argc, argv);
+      reader_no_flags(argc, argv, options);
     } else {
-      reader_whith_flags(argc, argv, options);
+      reader(argc, argv, options);
     }
   }
 
   return 0;
 }
+TARGET1 = s21_grep
+CC = gcc
+CFLAGS = -Wall -Werror -Wextra
+
+s21_grep : 
+	$(CC) $(CFLAGS) s21_grep.c -o $(TARGET1)
+
+clean : 
+	rm -f *.o $(TARGET1)
+
+rebuild : clean s21_grep
+test
+CLEAN
+clean
+^#include
