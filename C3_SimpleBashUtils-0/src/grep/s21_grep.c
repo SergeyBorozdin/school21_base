@@ -1,20 +1,22 @@
 #include <getopt.h>
+#include <regex.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 typedef struct options {
-  int e;  // шаблон
+  int e;  // шаблон (ищем это в каждой строчке файла) grep -e "ev" 123.txt -e
+          // "one"
   int i;  // игнорирует регистр
-  int v;  // инвертирует смысл поиска соответсвий
-  int c;  // выводит только количесвто совпадающих строк
-  int l;  // выводит только совпадающие файлы
-  int n;  // предваряет каждую строку вывода номером строки из файла ввода
-  int h;  // выводит совпадающие строки не предваряя их именам файла
-  int s;  // подавляет сообщения об ошибках о несуществующих или нечитаемых
-          // файлах
+  int v;  // выводит строки которые не содержат grep -v "e" 123.txt
+  int c;  // выводит количество совпадений
+  int l;  // выводит имя файла где есть совпадение
+  int n;  // нумерует строки
+  int h;  // выводит строки в множестве файлов без названия фалов
+  int s;  // не выводит grep: 1243.txt: No such file or directory
   int f;  // file  получает регулярные выражения из файла
-  int o;  // печатает только совпадающие(не пустые) части совпавшей строки
+  int o;  // печатает только совпадающие символы
 } opt;
 
 void grep_not_arg() {
@@ -44,7 +46,7 @@ void parser(int argc, char *argv[], opt *options) {
   };
 
   while (-1 !=
-         (opt = getopt_long(argc, argv, "+eivclnhsfo", opts, &option_index))) {
+         (opt = getopt_long(argc, argv, "e:ivclnhsf:o", opts, &option_index))) {
     switch (opt) {
       case 'e':
         options->e = 1;
@@ -83,84 +85,50 @@ void parser(int argc, char *argv[], opt *options) {
   }
 }
 
-// void reader(int argc, char *argv[], opt options) {
-//   for (int i = 1; i < argc; i++) {
-//     if (*argv[i] == '-') {
-//       continue;
-//     } else {
-//       FILE *fp = fopen(argv[i], "r");
+int match(char *string, char *pattern, regex_t *re) {
+  int status;
 
-//       if (fp != NULL) {
-//         int symbol = 0;
-//         int symbol_prev = '\n';
-//         int flag_bool = 0;
-//         int string_count = 0;
-//         int empty_string = 0;
+  if ((status = regcomp(re, pattern, REG_EXTENDED)) != 0) return (status);
+  status = regexec(re, string, 0, NULL, 0);
+  return (status);
+}
 
-//         while ((symbol = fgetc(fp)) != EOF) {
-//           if (options.s == 1 && symbol == '\n' && symbol_prev == '\n') {
-//             empty_string++;
-//             if (empty_string > 1) {
-//               flag_bool = 1;
-//             }
-//           } else {
-//             flag_bool = 0;
-//             empty_string = 0;
-//           }
-//           if (flag_bool == 0) {
-//             if (((options.n == 1 && options.b == 0) ||
-//                  (options.b == 1 && symbol != '\n')) &&
-//                 symbol_prev == '\n') {
-//               printf("%*d\t", 6, ++string_count);
-//             }
-//             if (options.t == 1 && symbol == '\t') {
-//               printf("^");
-//               symbol = 'I';
-//             }
-//             if (options.e == 1 && symbol == '\n') {
-//               printf("$");
-//             }
-//             if (options.v == 1) {
-//               if ((symbol >= 0 && symbol < 9) || (symbol > 10 && symbol <
-//               32)) {
-//                 printf("^");
-//                 symbol = symbol + 64;
-//               } else if (symbol == 127) {
-//                 printf("^");
-//                 symbol = '?';
-//               }
-//             }
-//             printf("%c", symbol);
-//             symbol_prev = symbol;
-//           }
-//         }
-//       } else {
-//         printf("%s: %s: No such file or directory\n", argv[0], argv[i]);
-//       }
-//     }
-//   }
-// }
+void reader_no_flags(int argc, char *argv[], opt options) {
+  char *str_pattern = argv[1];
+  int retval;
+  regex_t re;
+
+  for (int i = 2; i < argc; i++) {
+    FILE *fp = fopen(argv[i], "r");
+
+    if (fp != NULL) {
+      char line[4096];
+      while ((fgets(line, sizeof(line), fp)) != NULL) {
+        retval = match(line, str_pattern, &re);
+        if (retval == 0) {
+          printf("match - %s", line);
+        }
+      }
+    } else {
+      printf("%s: %s: No such file or directory\n", argv[0], argv[i]);
+    }
+  }
+}
 
 int main(int argc, char *argv[]) {
   if (argc == 1) {
     grep_not_arg();
   }
 
-  opt options = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-  parser(argc, argv, &options);
-
-  printf("options.e - %d\n", options.e);
-  printf("options.i - %d\n", options.i);
-  printf("options.v - %d\n", options.v);
-  printf("options.c - %d\n", options.c);
-  printf("options.l - %d\n", options.l);
-  printf("options.n - %d\n", options.n);
-  printf("options.h - %d\n", options.h);
-  printf("options.s - %d\n", options.s);
-  printf("options.f - %d\n", options.f);
-  printf("options.o - %d\n", options.o);
-
-  // reader(argc, argv, options);
+  if (argc > 1) {
+    opt options = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    parser(argc, argv, &options);
+    if (!options.c && !options.e && !options.f && !options.h && !options.i &&
+        !options.l && !options.n && !options.o && !options.s && !options.v) {
+      reader_no_flags(argc, argv, options);
+    }
+    // reader(argc, argv, options);
+  }
 
   return 0;
 }
