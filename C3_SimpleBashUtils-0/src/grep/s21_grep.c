@@ -7,21 +7,22 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 
 typedef struct options {
   int regeg_flag; // -e шаблон, -i CaMelCaSe, "none flags"
-  int v;  // выводит строки которые не содержат grep -v "e" 123.txt
-  int c;  // выводит количество совпадений
-  int l;  // выводит имя файла где есть совпадение
-  int n;  // нумерует строки
+  bool v;  // выводит строки которые не содержат grep -v "e" 123.txt
+  bool c;  // выводит количество совпадений
+  bool l;  // выводит имя файла где есть совпадение
+  bool n;  // нумерует строки
   // bool h;  // выводит строки в множестве файлов без названия фалов
   // bool s;  // не выводит grep: 1243.txt: No such file or directory
   // bool f;  // file  получает регулярные выражения из файла
-  int o;  // печатает только совпадающие символы
+  bool o;  // печатает только совпадающие символы
 } Flags;
 
 Flags grep_read_flags(int argc, char *argv[]) {
-  Flags flags = {0, 0, 0, 0, 0, 0};
+  Flags flags = {0, false, false, false, false, false};
   int current_flag = getopt(argc, argv, "eivclno");
 
   for (; current_flag != -1; current_flag = getopt(argc, argv, "eivclno")) {
@@ -33,19 +34,19 @@ Flags grep_read_flags(int argc, char *argv[]) {
         flags.regeg_flag |= REG_ICASE;
         break;
       case 'v':
-        flags.v = 1;
+        flags.v = true;
         break;
       case 'c':
-        flags.c = 1;
+        flags.c = true;
         break;
       case 'l':
-        flags.l = 1;
+        flags.l = true;
         break;
       case 'n':
-        flags.n = 1;
+        flags.n = true;
         break;
       case 'o':
-        flags.o = 1;
+        flags.o = true;
         break;
     }
   }
