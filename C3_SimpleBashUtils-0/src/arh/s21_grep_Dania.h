@@ -1,13 +1,11 @@
-#ifndef SRC_SRC_S1_GREP_H_
-#define SRC_SRC_S1_GREP_H_
-
+#ifndef S21_GREP_H
+#define S21_GREP_H
 #include <getopt.h>
 #include <regex.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
 #define sizeSearch 4096
 #define sizeBuf 1024
 #define sizeInf 512
@@ -57,7 +55,6 @@ struct option opts[] = {
     {"only-matching", no_argument, 0, 'o'},
     {0, 0, 0, 0},
 };
-
 void mainwork(opt *options, size_t *sizeStr, regex_t *regex,
               regmatch_t pmatch[1]);
 void Preparing(int argc, char **argv, opt *options, size_t sizeStr);
@@ -87,5 +84,4 @@ void Ecase(char *strPattern, char *str);
 void Fcase(opt *options);
 void switchcase(int *opchar, opt *options);
 void file_check_exit(char *str, int *Nullflag, FILE **fp, opt *options);
-
-#endif // SRC_S1_GREP_H_
+#endif

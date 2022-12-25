@@ -1,16 +1,4 @@
-#include <getopt.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-
-typedef struct options {
-  int b;  //нумерует не пустые строки
-  int e;  // показывает конец строки
-  int n;  // нумерует все строки
-  int s;  // сжимает пустые строки до одной
-  int t;  // показыввает табы
-  int v;  // показывает не читаемые символы
-} opt;
+#include "s21_cat.h"
 
 void cat_not_arg() {
   char symbol;

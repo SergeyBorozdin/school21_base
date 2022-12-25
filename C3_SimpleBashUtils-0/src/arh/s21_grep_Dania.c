@@ -1,59 +1,149 @@
-#include "s21_grep.h"
+// #include "s21_grep_Dania.h"
+
+#include <getopt.h>
+#include <regex.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#define sizeSearch 4096
+#define sizeBuf 1024
+#define sizeInf 512
+
+typedef struct options {
+  int eflag;
+  int iflag;
+  int vflag;
+  int cflag;
+  int lflag;
+  int nflag;
+  int hflag;
+  int sflag;
+  int fflag;
+  int oflag;
+  int nefl;
+  int find;
+  int success;
+  int FilenameFlag;
+  int registflag;
+  int NcountPrev;
+  int Ncount;
+  int CFlagcount;
+  int C;
+  int gline;
+  int regFound;
+  int argc;
+  char *strStr;
+  char *strFile;
+  char strSearch[sizeSearch];
+  char strPattern[sizeSearch];
+  char strBuf[sizeBuf];
+  char strInf[sizeInf];
+  char **argv;
+} opt;
+
+struct option opts[] = {
+    {"regexp", no_argument, 0, 'e'},
+    {"ignore-case", no_argument, 0, 'i'},
+    {"invert-match", no_argument, 0, 'v'},
+    {"count", no_argument, 0, 'c'},
+    {"files-with-matches", no_argument, 0, 'l'},
+    {"line-number", no_argument, 0, 'n'},
+    {"no-filename", no_argument, 0, 'h'},
+    {"no-messages", no_argument, 0, 's'},
+    {"file", no_argument, 0, 'f'},
+    {"only-matching", no_argument, 0, 'o'},
+    {0, 0, 0, 0},
+};
+
+void mainwork(opt *options, size_t *sizeStr, regex_t *regex,
+              regmatch_t pmatch[1]);
+void Preparing(int argc, char **argv, opt *options, size_t sizeStr);
+void File_range(opt *options, int *Nullflag, FILE **fp);
+void free_at_exit(opt *options);
+void N_Fname_comb(opt *options, int find);
+void Filename(opt *options);
+void FileString_format(opt *options);
+void Vflag(opt *options);
+void broadPrint(opt *options);
+void CloseFile(FILE *fp);
+void NeedName(opt *options);
+void oFlagBody(opt *options, regex_t *regex, regmatch_t pmatch[1], int find);
+void broadFunctionalPart(opt *options, regex_t *regex, regmatch_t pmatch[1],
+                         int find);
+void iFlagbody(opt *options);
+void cFlagbody(opt *options, int find);
+void lFlagbody(opt *options, int find);
+void argc_check(opt *options);
+void pars_and_prework(opt *options);
+void file_check(char *str, int *Nullflag, FILE **fp, opt *options);
+void malloc_check(char *str, opt *options);
+void last_sym_rewrite(char *strPattern);
+void decrement_for_EF(opt *options);
+void if_E_or_F(opt options, char *strPattern, char *strSearch);
+void Ecase(char *strPattern, char *str);
+void Fcase(opt *options);
+void switchcase(int *opchar, opt *options);
+void file_check_exit(char *str, int *Nullflag, FILE **fp, opt *options);
 
 int main(int argc, char **argv) {
   opt options = {0};
   size_t sizeStr = 1024;
   regex_t regex;
   regmatch_t pmatch[1];
-
-  // checks
-  options.argc = argc;
-  options.argv = argv;
-  options.strStr = (char *)malloc(sizeStr * sizeof options.strStr);
-  malloc_check(options.strStr, &options);
-  pars_and_prework(&options);
-  argc_check(&options);
-  last_sym_rewrite(options.strPattern);
-  options.find = optind;
-  options.registflag = REG_NEWLINE | REG_EXTENDED;
-  NeedName(&options);
-  decrement_for_EF(&options);
-  strcat(options.strSearch, argv[options.find]);
-  if_E_or_F(options, options.strPattern, options.strSearch);
-
-  // work
-  while (options.find < (options.argc)) {
-    int Nullflag = 0;
-    FILE *fp = NULL;
-    File_range(&options, &Nullflag, &fp);
-    options.CFlagcount = 0;
-    while (!Nullflag &&
-           ((options.gline = getline(&(options.strStr), &sizeStr, fp)) != -1)) {
-      memset(options.strBuf, 0, 1024);
-      memset(options.strInf, 0, 512);
-      FileString_format(&options);
-      options.NcountPrev = options.Ncount;
-      options.Ncount++;
-      iFlagbody(&options);
-      Vflag(&options);
-      regcomp(&regex, options.strSearch, options.registflag);
-      if (options.oflag && !options.vflag) {
-        oFlagBody(&options, &regex, pmatch, options.find);
-      } else {
-        broadFunctionalPart(&options, &regex, pmatch, options.find);
-      }
-      broadPrint(&options);
-      regfree(&regex);
-    }
-    cFlagbody(&options, options.find);
-    lFlagbody(&options, options.find);
-    options.Ncount = 0;
-    CloseFile(fp);
-    options.find++;
-  }
-
+  Preparing(argc, argv, &options, sizeStr);
+  mainwork(&options, &sizeStr, &regex, pmatch);
   free_at_exit(&options);
   return 0;
+}
+
+void Preparing(int argc, char **argv, opt *options, size_t sizeStr) {
+  options->argc = argc;
+  options->argv = argv;
+  options->strStr = (char *)malloc(sizeStr * sizeof options->strStr);
+  malloc_check(options->strStr, options);
+  pars_and_prework(options);
+  argc_check(options);
+  last_sym_rewrite(options->strPattern);
+  options->find = optind;
+  options->registflag = REG_NEWLINE | REG_EXTENDED;
+  NeedName(options);
+  decrement_for_EF(options);
+  strcat(options->strSearch, argv[options->find]);
+  if_E_or_F(*options, options->strPattern, options->strSearch);
+}
+
+void mainwork(opt *options, size_t *sizeStr, regex_t *regex,
+              regmatch_t pmatch[1]) {
+  while (options->find < (options->argc)) {
+    int Nullflag = 0;
+    FILE *fp = NULL;
+    File_range(options, &Nullflag, &fp);
+    options->CFlagcount = 0;
+    while (!Nullflag && ((options->gline = getline(&(options->strStr), sizeStr,
+                                                   fp)) != -1)) {
+      memset(options->strBuf, 0, 1024);
+      memset(options->strInf, 0, 512);
+      FileString_format(options);
+      options->NcountPrev = options->Ncount;
+      options->Ncount += 1;
+      iFlagbody(options);
+      Vflag(options);
+      regcomp(regex, options->strSearch, options->registflag);
+      if (options->oflag && !options->vflag) {
+        oFlagBody(options, regex, pmatch, options->find);
+      } else {
+        broadFunctionalPart(options, regex, pmatch, options->find);
+      }
+      broadPrint(options);
+      regfree(regex);
+    }
+    cFlagbody(options, options->find);
+    lFlagbody(options, options->find);
+    options->Ncount = 0;
+    CloseFile(fp);
+    (options->find)++;
+  }
 }
 
 void broadPrint(opt *options) {

@@ -4,7 +4,7 @@ CFLAGS = -Wall -Werror -Wextra
 
 
 s21_cat : 
-	$(CC) $(CFLAGS) s21_cat.c -o $(TARGET1)
+	$(CC) $(CFLAGS) s21_cat.c s21_cat.h -o $(TARGET1)
 
 clean : 
 	rm -f *.o $(TARGET1)
